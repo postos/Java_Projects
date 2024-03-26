@@ -1,6 +1,6 @@
 //********************************************************************
 //
-//  Author:        Instructor
+//  Author:        Paul Ostos
 //
 //  Program #:     4
 //
@@ -30,54 +30,75 @@ public class Project4 {
 
     // global variables for keeping track of count across threads
     static int pointsInCircle = 0;
-    static ReentrantLock lock = new ReentrantLock();
+    static ReentrantLock lock = new ReentrantLock(); // mutex lock
+
+    //***************************************************************
+    //
+    //  Method:       main
+    // 
+    //  Description:  The main method of the program
+    //
+    //  Parameters:   String array
+    //
+    //  Returns:      N/A 
+    //
+    //**************************************************************
 
     public static void main(String[] args) {
         // create an instance Project4 object
         Project4 obj = new Project4();
 
-        // initialize containers for values
-        double userInput;
-        double estimatedPi;
-        int numCores;
-
         // display developer info
         obj.developerInfo();
 
         // get user input for generating random sets
-        userInput = obj.getUserInput();
+        double userInput = obj.getUserInput();
 
         // get the number of CPU cores
-        numCores = Runtime.getRuntime().availableProcessors();
-        System.out.println("Number of CPU cores: " + numCores);
+        int numCores = Runtime.getRuntime().availableProcessors();
+        System.out.println("Number of CPU Cores in Thread Pool: " + numCores);
 
-        // create a thread pool with a fixed size equal to the number of CPU cores
-        ExecutorService executor = Executors.newFixedThreadPool(numCores);
+        // create threads to calculate pi
+        obj.createThreads(userInput, numCores);
 
-        for (int i = 0; i < numCores; i++) {
-            // create a multiThread instance and send equal parts to each CPU core
-            MultiThread myMultiThread = new MultiThread(userInput / numCores);
+        // calculate the estimation of pi 
+        obj.estimatePi(userInput);
 
-            // execute the thread
-            executor.execute(myMultiThread);
-        }
-
-        // shutdown the executor
-        executor.shutdown();
-
-        try {
-            // wait until all threads terminate
-            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-
-            // calculate output of the estimated value of pi
-            estimatedPi = estimatePi(userInput);
-            System.out.println("Estimated Value of Pi: " + estimatedPi);
-
-        } catch (InterruptedException e) {
-            // handle errors
-            System.err.println("Program Abort Reason: " + e.getMessage());
-        }
     }
+
+    //***************************************************************
+    //
+    //  Method:       developerInfo
+    // 
+    //  Description:  prints developer name and other important information 
+    //
+    //  Parameters:   none 
+    //
+    //  Returns:      N/A 
+    //
+    //**************************************************************
+
+
+    public void developerInfo() {
+        System.out.println("\n*********************************************");
+        System.out.println("Name:    Paul Ostos ");
+        System.out.println("Course:  COSC 4302 Operating Systems ");
+        System.out.println("Program: 4 ");
+        System.out.println("*********************************************\n");
+    }
+
+    //***************************************************************
+    //
+    //  Method:       getUserInput
+    // 
+    //  Description:  gets user input for random point generator
+    //
+    //  Parameters:   none
+    //
+    //  Returns:      int userInput
+    //
+    //**************************************************************
+
 
     public double getUserInput() {
         int userInput = 0;
@@ -95,7 +116,7 @@ public class Project4 {
                     System.err.println("Invalid input. Enter a positive integer greater than 0.");
                 }
             } catch (InputMismatchException e) {
-                System.err.println("Invalid input. Enter an integer.");
+                System.err.println("Invalid input. Enter a positive integer greater than 0.");
                 scanner.next(); // consume invalid input, avoid infinite loop
             }
         }
@@ -103,16 +124,62 @@ public class Project4 {
         return userInput;
     }
 
-    public void developerInfo() {
-        System.out.println("\n*********************************************");
-        System.out.println("Name:    Paul Ostos ");
-        System.out.println("Course:  COSC 4302 Operating Systems ");
-        System.out.println("Program: 4 ");
-        System.out.println("\n*********************************************\n");
+//***************************************************************
+//
+//  Method:       createThreads
+// 
+//  Description:  creates a fixed thread pool with a size equal to the number of CPU cores, 
+//                using executor services, to perform Monte Carlo simulations for estimating the value of pi.
+//
+//  Parameters:   userInput - the total number of random points to generate
+//                numCores - the number of CPU cores to utilize for parallel processing
+//
+//  Returns:      N/A
+//
+//**************************************************************
+
+
+    public void createThreads(double userInput, int numCores){
+
+        // create a thread pool with a fixed size equal to the number of CPU cores
+        ExecutorService executor = Executors.newFixedThreadPool(numCores);
+        for (int i = 0; i < numCores; i++) {
+            // create a multiThread instance and send equal parts to each CPU core
+            MultiThread myMultiThread = new MultiThread(userInput / numCores);
+
+            // execute the thread
+            executor.execute(myMultiThread);
+        }
+
+        // shutdown the executor
+        executor.shutdown();
+
+        try {
+            // wait until all threads terminate
+            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+
+        } catch (InterruptedException e) {
+            // handle errors
+            System.err.println("Program Abort Reason: " + e.getMessage());
+        }
     }
 
-    public static double estimatePi(double userInput) {
+    //***************************************************************
+    //
+    //  Method:       estimatePi
+    // 
+    //  Description:  calculates an estimation for the value of pi 
+    //
+    //  Parameters:   userInput 
+    //
+    //  Returns:      N/A
+    //
+    //**************************************************************
+
+
+    public void estimatePi(double userInput) {
         // estimate pi using the given formula
-        return 4.0 * (pointsInCircle / userInput);
+        double estimatedPi =  4.0 * (pointsInCircle / userInput);
+        System.out.println("Estimated Value of Pi: " + estimatedPi);
     }
 }
